@@ -7,13 +7,11 @@ import zio.{Task, ZIO}
 
 import collection.mutable
 class CompanyController private extends BaseController with CompanyEndpoints {
-  val db = mutable.Map[Long, Company](
-    -1L -> Company(-1, "invalid", "Not Company", "")
-  )
+  val db = mutable.Map[Long, Company]()
 
   val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogicSuccess { req =>
     ZIO.succeed {
-      val newId = db.keys.max + 1
+      val newId = db.keys.maxOption.getOrElse(0L) + 1
       val newCompany = req.toCompany(newId)
       db += (newId -> newCompany)
       newCompany
