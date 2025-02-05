@@ -4,10 +4,11 @@ services:
   db:
     image: postgres
     restart: always
+    container_name: ziotapir-postgres-db
     volumes:
       - "./sql:/docker-entrypoint-initdb.d"
     environment:
-      - "POSTGRES_USER=docker"
-      - "POSTGRES_PASSWORD=docker"
+      - "POSTGRES_USER=ziotapir"
+      - "POSTGRES_PASSWORD=ziotapir"
     ports:
       - "5100:5432"

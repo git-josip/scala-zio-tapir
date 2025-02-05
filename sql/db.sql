@@ -1,5 +1,8 @@
-create DATABASE reviewboard;
-\c reviewboard;
+-- create DATABASE ziotapir;
+
+SELECT 'CREATE DATABASE ziotapir'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ziotapir')\gexec
+\c ziotapir;
 
 CREATE TABLE IF NOT EXISTS companies (
     id BIGSERIAL PRIMARY KEY,
