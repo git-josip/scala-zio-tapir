@@ -12,8 +12,8 @@ final case class CreateCompanyRequest(
     image: Option[String] = None,
     tags: Option[List[String]] = None,
 ) {
-  def toCompany(id: Long) =
-    Company(id, Company.makeSlug(name), name, url, location, country, industry, image, tags.getOrElse(List()))
+  def toCompany =
+    Company(-1, Company.makeSlug(name), name, url, location, country, industry, image, tags.getOrElse(List()))
 }
 
 object CreateCompanyRequest {

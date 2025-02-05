@@ -65,17 +65,3 @@ object CompanyRepositoryLive {
     ZIO.service[Quill.Postgres[SnakeCase]].map(q => CompanyRepositoryLive(q))
   }
 }
-
-object CompanyRepositoryDemo extends ZIOAppDefault {
-  val program = for {
-    repo <- ZIO.service[CompanyRepository]
-    _ <- repo.create(Company(-1, "Amazon", "aws", "amazon.com"))
-  } yield ()
-  override def run =
-    program
-      .provide(
-        CompanyRepositoryLive.layer,
-        Quill.Postgres.fromNamingStrategy(SnakeCase),
-        Quill.DataSource.fromPrefix("ziotapir.db")
-      )
-}

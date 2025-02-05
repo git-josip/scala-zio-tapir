@@ -1,8 +1,9 @@
 package com.reactive.ziotapir
 
 import com.reactive.ziotapir.http.HttpApi
-import com.reactive.ziotapir.http.controllers.{CompanyController, HealthController}
-import com.reactive.ziotapir.services.CompanyService
+import com.reactive.ziotapir.repositories.{CompanyRepositoryLive, Repository}
+import com.reactive.ziotapir.services.CompanyServiceLive
+import io.getquill.SnakeCase
 import sttp.tapir.*
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zio.*
@@ -23,6 +24,13 @@ object Application extends ZIOAppDefault {
   override def run =
     serverProgram.provide(
       Server.default,
-      CompanyService.dummyLayer
+      // services
+      CompanyServiceLive.layer,
+
+      // repositories
+      CompanyRepositoryLive.layer,
+
+      // other
+      Repository.dataLayer
     )
 }

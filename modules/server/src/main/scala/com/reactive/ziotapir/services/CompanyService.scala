@@ -2,7 +2,9 @@ package com.reactive.ziotapir.services
 
 import com.reactive.ziotapir.domain.data.Company
 import com.reactive.ziotapir.http.requests.company.CreateCompanyRequest
+import com.reactive.ziotapir.repositories.CompanyRepository
 import zio.*
+
 import collection.mutable
 
 trait CompanyService {
@@ -12,23 +14,18 @@ trait CompanyService {
   def getBySlug(slug: String): Task[Option[Company]]
 }
 
-object CompanyService {
-  val dummyLayer: ZLayer[Any, Nothing, CompanyService] = ZLayer.succeed(new CompanyServiceDummy)
+class CompanyServiceLive private (repository: CompanyRepository) extends CompanyService {
+  override def create(createCompanyRequest: CreateCompanyRequest): Task[Company] = repository.create(createCompanyRequest.toCompany)
+
+  override def getAll: Task[List[Company]] = repository.getAll
+
+  override def getById(id: Long): Task[Option[Company]] = repository.getById(id)
+
+  override def getBySlug(slug: String): Task[Option[Company]] = repository.getBySlug(slug)
 }
 
-class CompanyServiceDummy extends CompanyService {
-  val db = mutable.Map[Long, Company]()
+object CompanyServiceLive {
+  private def create(repository: CompanyRepository) = new CompanyServiceLive(repository)
 
-  override def create(createCompanyRequest: CreateCompanyRequest): Task[Company] = ZIO.succeed {
-    val newId = db.keys.maxOption.getOrElse(0L) + 1
-    val newCompany = createCompanyRequest.toCompany(newId)
-    db += (newId -> newCompany)
-    newCompany
-  }
-
-  override def getAll: Task[List[Company]] = ZIO.succeed(db.values.toList)
-
-  override def getById(id: Long): Task[Option[Company]] = ZIO.succeed(db.get(id))
-
-  override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed(db.values.find(_.slug == slug))
+  val layer = ZLayer.fromFunction(create _)
 }
