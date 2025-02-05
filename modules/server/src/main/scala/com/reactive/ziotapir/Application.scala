@@ -2,6 +2,7 @@ package com.reactive.ziotapir
 
 import com.reactive.ziotapir.http.HttpApi
 import com.reactive.ziotapir.http.controllers.{CompanyController, HealthController}
+import com.reactive.ziotapir.services.CompanyService
 import sttp.tapir.*
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zio.*
@@ -21,6 +22,7 @@ object Application extends ZIOAppDefault {
 
   override def run =
     serverProgram.provide(
-      Server.default
+      Server.default,
+      CompanyService.dummyLayer
     )
 }

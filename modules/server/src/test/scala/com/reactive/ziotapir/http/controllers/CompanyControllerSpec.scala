@@ -2,6 +2,7 @@ package com.reactive.ziotapir.http.controllers
 
 import com.reactive.ziotapir.domain.data.Company
 import com.reactive.ziotapir.http.requests.company.CreateCompanyRequest
+import com.reactive.ziotapir.services.CompanyService
 import sttp.client3.testing.SttpBackendStub
 import sttp.monad.MonadError
 import sttp.tapir.server.stub.TapirStubInterpreter
@@ -15,6 +16,14 @@ import com.reactive.ziotapir.syntax.*
 
 object CompanyControllerSpec extends ZIOSpecDefault {
   private given zioME: MonadError[Task] = new RIOMonadError[Any]
+
+  private val dummyCompany = Company(1L, "test-company", "Test Company", "test.com")
+  private val serviceStub = new CompanyService {
+    override def create(createCompanyRequest: CreateCompanyRequest): Task[Company] = ZIO.succeed(dummyCompany)
+    override def getAll: Task[List[Company]] = ZIO.succeed(List(dummyCompany))
+    override def getById(id: Long): Task[Option[Company]] = ZIO.succeed(Option.when(id == dummyCompany.id)(dummyCompany))
+    override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed(Option.when(slug == dummyCompany.slug)(dummyCompany))
+  }
 
   private def backendStubZIO(endpointFun: CompanyController => ServerEndpoint[Any, Task]) = for {
     controller <- CompanyController.makeZio
@@ -42,7 +51,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
         program.assert("company create") { resBody =>
           resBody.toOption.flatMap(_.fromJson[Company].toOption)
-            .contains(Company(1, "test-company", "Test Company", "test.com"))
+            .contains(dummyCompany)
         }
       },
 
@@ -54,24 +63,25 @@ object CompanyControllerSpec extends ZIOSpecDefault {
             .send(backendStub)
         } yield response.body
 
-        program.assert("get all should be empty") { resBody =>
+        program.assert("get all should") { resBody =>
           resBody.toOption.flatMap(_.fromJson[List[Company]].toOption)
-            .contains(List())
+            .contains(List(dummyCompany))
         }
       },
 
       test("get by id") {
         val program = for {
-          backendStub <- backendStubZIO(_.getAll)
+          backendStub <- backendStubZIO(_.getById)
           response <- basicRequest
             .get(uri"/companies/1")
             .send(backendStub)
         } yield response.body
 
-        program.assert("get by id should be empty") { resBody =>
-          resBody.toOption.flatMap(_.fromJson[List[Company]].toOption)
-            .isEmpty
+        program.assert("get by id should contain") { resBody =>
+          resBody.toOption.flatMap(_.fromJson[Company].toOption)
+            .contains(dummyCompany)
         }
       }
-    )
+    ).provide(ZLayer.succeed(serviceStub))
+  end spec
 }

@@ -2,30 +2,27 @@ package com.reactive.ziotapir.http.controllers
 
 import com.reactive.ziotapir.domain.data.Company
 import com.reactive.ziotapir.http.endpoints.{CompanyEndpoints, HealthEndpoint}
+import com.reactive.ziotapir.services.CompanyService
 import sttp.tapir.server.ServerEndpoint
 import zio.{Task, ZIO}
 
 import collection.mutable
-class CompanyController private extends BaseController with CompanyEndpoints {
+class CompanyController private (service: CompanyService) extends BaseController with CompanyEndpoints {
   val db = mutable.Map[Long, Company]()
 
   val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogicSuccess { req =>
-    ZIO.succeed {
-      val newId = db.keys.maxOption.getOrElse(0L) + 1
-      val newCompany = req.toCompany(newId)
-      db += (newId -> newCompany)
-      newCompany
-    }
+    service.create(req)
   }
 
-  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogicSuccess { _ =>
-    ZIO.succeed(db.values.toList)
-  }
+  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogicSuccess { _ => service.getAll }
 
   val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogicSuccess { id =>
     ZIO
       .attempt(id.toLong)
-      .map(id => db.get(id))
+      .flatMap(id => service.getById(id))
+      .catchSome {
+        case _: NumberFormatException => service.getBySlug(id)
+      }
   }
 
   override val routes: List[ServerEndpoint[Any, Task]] = List(
@@ -36,5 +33,7 @@ class CompanyController private extends BaseController with CompanyEndpoints {
 }
 
 object CompanyController {
-  val makeZio = ZIO.succeed(new CompanyController)
+  val makeZio = for {
+    service <- ZIO.service[CompanyService]
+  } yield new CompanyController(service)
 }
