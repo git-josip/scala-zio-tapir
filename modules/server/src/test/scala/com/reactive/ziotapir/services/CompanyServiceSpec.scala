@@ -79,12 +79,9 @@ object CompanyServiceSpec extends ZIOSpecDefault {
           company1 <- service(_.create(CreateCompanyRequest("Test Company", "test.com")))
           company2 <- service(_.create(CreateCompanyRequest("Test Company 2", "test2.com")))
           companies <- service(_.getAll)
-        } yield (List(company1, company2), companies)
+        } yield (company1, company2, companies)
 
-        companiesZIO.assert("all companies found") {
-          case (companiesCreated, companiesRetrieved) => companiesCreated == companiesRetrieved
-          case _ => false
-        }
+        companiesZIO.assert("all companies found")(result => List(result._1, result._2).toSet == result._3.toSet)
       }
     ).provide(
       CompanyServiceLive.layer,
