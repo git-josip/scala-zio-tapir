@@ -6,8 +6,8 @@ import sttp.tapir.*
 import sttp.tapir.json.zio.*
 import sttp.tapir.generic.auto._
 
-trait CompanyEndpoints {
-  val createEndpoint = endpoint
+trait CompanyEndpoints extends Endpoints {
+  val createEndpoint: EP[CreateCompanyRequest, Company] = baseEndpoint
     .tag("companies")
     .name("create")
     .description("Creates a listing for a company")
@@ -16,7 +16,7 @@ trait CompanyEndpoints {
     .in(jsonBody[CreateCompanyRequest])
     .out(jsonBody[Company])
 
-  val getAllEndpoint = endpoint
+  val getAllEndpoint: EP[Unit, List[Company]] = baseEndpoint
     .tag("companies")
     .name("getAll")
     .description("Get all companies")
@@ -24,7 +24,7 @@ trait CompanyEndpoints {
     .get
     .out(jsonBody[List[Company]])
 
-  val getByIdEndpoint = endpoint
+  val getByIdEndpoint: EP[String, Option[Company]] = baseEndpoint
     .tag("companies")
     .name("getById")
     .description("Get a company by id")

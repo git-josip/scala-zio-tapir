@@ -6,20 +6,20 @@ import sttp.tapir.server.ServerEndpoint
 import zio.{Task, ZIO}
 
 class ReviewController private (service: ReviewService) extends BaseController with ReviewEndpoints {
-  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogicSuccess { req =>
-    service.create(req._2, req._1)
+  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogic { req =>
+    service.create(req._2, req._1).either
   }
 
-  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogicSuccess { _ => service.getAll }
+  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogic { _ => service.getAll.either }
 
-  val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogicSuccess { id =>
+  val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogic { id =>
     ZIO
       .attempt(id)
-      .flatMap(id => service.getById(id))
+      .flatMap(id => service.getById(id).either)
   }
 
-  val getByCompanyId: ServerEndpoint[Any, Task] = getByCompanyIdEndpoint.serverLogicSuccess { service.getByCompanyId }
-  val getByUserId: ServerEndpoint[Any, Task] = getByUserIdEndpoint.serverLogicSuccess { service.getByUserId }
+  val getByCompanyId: ServerEndpoint[Any, Task] = getByCompanyIdEndpoint.serverLogic { service.getByCompanyId(_).either }
+  val getByUserId: ServerEndpoint[Any, Task] = getByUserIdEndpoint.serverLogic { service.getByUserId(_).either }
 
   override val routes: List[ServerEndpoint[Any, Task]] = List(
     create,

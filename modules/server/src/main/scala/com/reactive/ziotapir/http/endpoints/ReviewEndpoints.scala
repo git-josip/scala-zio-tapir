@@ -4,10 +4,10 @@ import com.reactive.ziotapir.domain.data.Review
 import com.reactive.ziotapir.http.requests.review.CreateReviewRequest
 import sttp.tapir.*
 import sttp.tapir.json.zio.*
-import sttp.tapir.generic.auto.*
+import sttp.tapir.generic.auto._
 
-trait ReviewEndpoints {
-  val createEndpoint = endpoint
+trait ReviewEndpoints extends Endpoints {
+  val createEndpoint: EP[(Long, CreateReviewRequest), Review] = baseEndpoint
     .tag("reviews")
     .name("create")
     .description("Creates a review for a company")
@@ -16,7 +16,7 @@ trait ReviewEndpoints {
     .in(jsonBody[CreateReviewRequest])
     .out(jsonBody[Review])
 
-  val getAllEndpoint = endpoint
+  val getAllEndpoint: EP[Unit, List[Review]] = baseEndpoint
     .tag("reviews")
     .name("getAll")
     .description("Get all reviews")
@@ -24,7 +24,7 @@ trait ReviewEndpoints {
     .get
     .out(jsonBody[List[Review]])
 
-  val getByIdEndpoint = endpoint
+  val getByIdEndpoint: EP[Long, Option[Review]] = baseEndpoint
     .tag("reviews")
     .name("getById")
     .description("Get a review by id")
@@ -32,7 +32,7 @@ trait ReviewEndpoints {
     .get
     .out(jsonBody[Option[Review]])
 
-  val getByCompanyIdEndpoint = endpoint
+  val getByCompanyIdEndpoint: EP[Long, List[Review]] = baseEndpoint
     .tag("reviews")
     .name("getByCompanyId")
     .description("Get all reviews for a company")
@@ -40,7 +40,7 @@ trait ReviewEndpoints {
     .get
     .out(jsonBody[List[Review]])
 
-  val getByUserIdEndpoint = endpoint
+  val getByUserIdEndpoint: EP[Long, List[Review]] = baseEndpoint
       .tag("reviews")
       .name("getByUserId")
       .description("get reviews written by a user")
