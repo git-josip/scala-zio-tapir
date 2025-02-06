@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     benefits INT NOT NULL,
     would_recommend INT NOT NULL,
     review TEXT NOT NULL,
-    created TIMESTAMP NOT NULL DEFAULT now(),
-    updated TIMESTAMP NOT NULL DEFAULT now()
+    created TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 

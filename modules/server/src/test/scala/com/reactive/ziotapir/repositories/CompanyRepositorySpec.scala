@@ -1,16 +1,16 @@
 package com.reactive.ziotapir.repositories
 
-import org.testcontainers.containers.PostgreSQLContainer
 import com.reactive.ziotapir.domain.data.Company
 import zio.*
 import zio.test.*
 import com.reactive.ziotapir.syntax.*
-import org.postgresql.ds.PGSimpleDataSource
 
 import java.sql.SQLException
 import javax.sql.DataSource
 
-object CompanyRepositorySpec extends ZIOSpecDefault {
+object CompanyRepositorySpec extends ZIOSpecDefault with RepositorySpec {
+  override val initScript: String = "sql/companies.sql"
+
   override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("CompanyRepositorySpec")(
       test("create") {
@@ -144,25 +144,4 @@ object CompanyRepositorySpec extends ZIOSpecDefault {
     slug = "test-company",
     url = "test.com"
   )
-  def createContainer(): Task[PostgreSQLContainer[Nothing]] = for {
-    container <- ZIO.attempt[PostgreSQLContainer[Nothing]](PostgreSQLContainer("postgres").withInitScript("sql/companies.sql"))
-    _ <- ZIO.attempt(container.start())
-  } yield container
-
-  def closeContainer(container: PostgreSQLContainer[Nothing]): UIO[Unit] =
-    ZIO.attempt(container.stop()).ignoreLogged
-
-  def createDataSource(container: PostgreSQLContainer[Nothing]): Task[DataSource] =
-    ZIO.attempt:
-      val dataSource = new PGSimpleDataSource()
-      dataSource.setUrl(container.getJdbcUrl)
-      dataSource.setUser(container.getUsername)
-      dataSource.setPassword(container.getPassword)
-      dataSource
-
-  val dataSourceLayer: ZLayer[Any with Scope, Throwable, DataSource] = ZLayer:
-    for
-      container  <- ZIO.acquireRelease(createContainer())(closeContainer)
-      dataSource <- createDataSource(container)
-    yield dataSource
 }
