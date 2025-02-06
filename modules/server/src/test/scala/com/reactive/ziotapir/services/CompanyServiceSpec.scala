@@ -15,7 +15,7 @@ object CompanyServiceSpec extends ZIOSpecDefault {
 
   private val repositoryStubLayer = ZLayer.succeed(
     new CompanyRepository {
-      val db = collection.mutable.Map[Long, Company]()
+      private val db = collection.mutable.Map[Long, Company]()
 
       override def create(company: Company): Task[Company] = ZIO.succeed {
         val nextId = db.keys.maxOption.getOrElse(0L) + 1
