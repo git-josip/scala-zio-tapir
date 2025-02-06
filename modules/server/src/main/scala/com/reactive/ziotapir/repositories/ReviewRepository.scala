@@ -12,7 +12,7 @@ trait ReviewRepository {
   def getByCompanyId(companyId: Long): Task[List[Review]]
   def getByUserId(userId: Long): Task[List[Review]]
   def update(id: Long, op: Review => Review): Task[Review]
-  def delete(id: Long): Task[Unit]
+  def delete(id: Long): Task[Review]
   def getAll: Task[List[Review]]
 }
 
@@ -55,7 +55,7 @@ class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends Re
     }
   } yield updated
 
-  override def delete(id: Long): Task[Unit] = for {
+  override def delete(id: Long): Task[Review] = for {
     current <- getById(id).someOrFail(new RuntimeException(s"Could not delete, missing id $id"))
     deleted <- run {
       query[Review]

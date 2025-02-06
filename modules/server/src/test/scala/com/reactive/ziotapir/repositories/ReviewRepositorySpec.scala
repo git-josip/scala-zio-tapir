@@ -3,8 +3,6 @@ package com.reactive.ziotapir.repositories
 import com.reactive.ziotapir.domain.data.Review
 import zio.*
 import zio.test.*
-import com.reactive.ziotapir.syntax.*
-
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
