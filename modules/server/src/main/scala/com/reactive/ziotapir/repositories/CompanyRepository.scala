@@ -1,6 +1,7 @@
 package com.reactive.ziotapir.repositories
 
 import com.reactive.ziotapir.domain.data.Company
+import com.reactive.ziotapir.domain.errors.NotFoundError
 import io.getquill.*
 import io.getquill.jdbczio.Quill
 import zio.*
@@ -40,7 +41,7 @@ class CompanyRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends C
   override def getAll: Task[List[Company]] = run(query[Company])
 
   override def update(id: Long, op: Company => Company): Task[Company] = for {
-    current <- getById(id).someOrFail(new RuntimeException(s"Could not update, missing id $id"))
+    current <- getById(id).someOrFail(NotFoundError(s"Could not update, missing id $id"))
     updated <- run {
       query[Company]
         .filter(_.id == lift(id))
@@ -50,7 +51,7 @@ class CompanyRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends C
   } yield updated
 
   override def delete(id: Long): Task[Company] = for {
-    current <- getById(id).someOrFail(new RuntimeException(s"Could not delete, missing id $id"))
+    current <- getById(id).someOrFail(NotFoundError(s"Could not delete, missing id $id"))
     deleted <- run {
       query[Company]
         .filter(_.id == lift(id))

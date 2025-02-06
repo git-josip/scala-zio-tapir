@@ -1,6 +1,7 @@
 package com.reactive.ziotapir.repositories
 
 import com.reactive.ziotapir.domain.data.Review
+import com.reactive.ziotapir.domain.errors.NotFoundError
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
 import zio.*
@@ -46,7 +47,7 @@ class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends Re
   }
 
   def update(id: Long, op: Review => Review): Task[Review] = for {
-    current <- getById(id).someOrFail(new RuntimeException(s"Could not update, missing id $id"))
+    current <- getById(id).someOrFail(NotFoundError(s"Could not update, missing id $id"))
     updated <- run {
       query[Review]
         .filter(_.id == lift(id))
@@ -56,7 +57,7 @@ class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends Re
   } yield updated
 
   override def delete(id: Long): Task[Review] = for {
-    current <- getById(id).someOrFail(new RuntimeException(s"Could not delete, missing id $id"))
+    current <- getById(id).someOrFail(NotFoundError(s"Could not delete, missing id $id"))
     deleted <- run {
       query[Review]
         .filter(_.id == lift(id))
