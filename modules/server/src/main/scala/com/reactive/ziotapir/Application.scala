@@ -1,8 +1,8 @@
 package com.reactive.ziotapir
 
 import com.reactive.ziotapir.http.HttpApi
-import com.reactive.ziotapir.repositories.{CompanyRepositoryLive, Repository}
-import com.reactive.ziotapir.services.CompanyServiceLive
+import com.reactive.ziotapir.repositories.{CompanyRepositoryLive, Repository, ReviewRepositoryLive}
+import com.reactive.ziotapir.services.{CompanyServiceLive, ReviewServiceLive}
 import io.getquill.SnakeCase
 import sttp.tapir.*
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
@@ -26,9 +26,11 @@ object Application extends ZIOAppDefault {
       Server.default,
       // services
       CompanyServiceLive.layer,
+      ReviewServiceLive.layer,
 
       // repositories
       CompanyRepositoryLive.layer,
+      ReviewRepositoryLive.layer,
 
       // other
       Repository.dataLayer

@@ -6,10 +6,7 @@ import com.reactive.ziotapir.services.CompanyService
 import sttp.tapir.server.ServerEndpoint
 import zio.{Task, ZIO}
 
-import collection.mutable
 class CompanyController private (service: CompanyService) extends BaseController with CompanyEndpoints {
-  val db = mutable.Map[Long, Company]()
-
   val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogicSuccess { req =>
     service.create(req)
   }
