@@ -2,8 +2,8 @@ package com.reactive.ziotapir
 
 import com.reactive.ziotapir.config.{Configs, EmailServiceConfig, JwtConfig, RecoveryTokensConfig}
 import com.reactive.ziotapir.http.HttpApi
-import com.reactive.ziotapir.repositories.{CompanyRepositoryLive, Repository, ReviewRepositoryLive, UserRepositoryLive}
-import com.reactive.ziotapir.services.{CompanyServiceLive, JWTServiceLive, ReviewServiceLive, UserServiceLive}
+import com.reactive.ziotapir.repositories.{CompanyRepositoryLive, RecoveryTokensRepositoryLive, Repository, ReviewRepositoryLive, UserRepositoryLive}
+import com.reactive.ziotapir.services.{CompanyServiceLive, EmailServiceLive, JWTServiceLive, ReviewServiceLive, UserServiceLive}
 import io.getquill.SnakeCase
 import sttp.tapir.*
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
@@ -34,10 +34,12 @@ object Application extends ZIOAppDefault {
       ReviewServiceLive.layer,
       JWTServiceLive.layer,
       UserServiceLive.layer,
+      EmailServiceLive.layer,
       // repositories
       CompanyRepositoryLive.layer,
       ReviewRepositoryLive.layer,
       UserRepositoryLive.layer,
+      RecoveryTokensRepositoryLive.layer,
       // other
       Repository.dataLayer
     )

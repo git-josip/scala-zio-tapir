@@ -1,6 +1,6 @@
 package com.reactive.ziotapir.http
 
-import com.reactive.ziotapir.http.controllers.{BaseController, CompanyController, HealthController, ReviewController}
+import com.reactive.ziotapir.http.controllers.{BaseController, CompanyController, HealthController, ReviewController, UserController}
 
 object HttpApi {
   def gatherRoutes(controllers: List[BaseController]) = controllers.flatMap(_.routes)
@@ -9,7 +9,8 @@ object HttpApi {
     health <- HealthController.makeZio
     company <- CompanyController.makeZio
     review <- ReviewController.makeZio
-  } yield List(health, company, review)
+    user <- UserController.makeZIO
+  } yield List(health, company, review, user)
 
   val endpointsZIO = makeControllers.map(gatherRoutes)
 }

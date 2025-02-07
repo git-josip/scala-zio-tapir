@@ -1,0 +1,9 @@
+package com.reactive.ziotapir.http.requests.user
+
+import zio.json.JsonCodec
+
+final case class UpdatePasswordRequest(
+  email: String,
+  oldPassword: String,
+  newPassword: String
+) derives JsonCodec
