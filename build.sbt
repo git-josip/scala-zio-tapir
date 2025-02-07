@@ -46,10 +46,6 @@ val dependencies = Seq(
   "com.stripe"                     % "stripe-java"                       % stripeVersion
 )
 
-lazy val foundations = (project in file("modules/foundations"))
-  .settings(
-    libraryDependencies ++= dependencies
-  )
 
 lazy val server = (project in file("modules/server"))
   .settings(
@@ -60,5 +56,5 @@ lazy val root = (project in file("."))
   .settings(
     name := "scala-zio-tapir"
   )
-  .aggregate(foundations, server)
-  .dependsOn(foundations, server)
+  .aggregate(server)
+  .dependsOn(server)
