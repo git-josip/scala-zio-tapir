@@ -1,13 +1,15 @@
 package com.reactive.ziotapir.http.controllers
 
 import com.reactive.ziotapir.http.endpoints.ReviewEndpoints
-import com.reactive.ziotapir.services.ReviewService
+import com.reactive.ziotapir.services.{JWTService, ReviewService}
 import sttp.tapir.server.ServerEndpoint
 import zio.{Task, ZIO}
 
-class ReviewController private (service: ReviewService) extends BaseController with ReviewEndpoints {
-  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogic { req =>
-    service.create(req._2, req._1).either
+class ReviewController private (service: ReviewService, jwtService: JWTService) extends BaseController with ReviewEndpoints {
+  val create: ServerEndpoint[Any, Task] = createEndpoint
+    .serverSecurityLogic(jwtService.verifyToken(_).either)
+    .serverLogic { userId => req =>
+    service.create(req, userId.id).either
   }
 
   val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogic { _ => service.getAll.either }
@@ -33,5 +35,6 @@ class ReviewController private (service: ReviewService) extends BaseController w
 object ReviewController {
   val makeZio = for {
     service <- ZIO.service[ReviewService]
-  } yield new ReviewController(service)
+    jwtService <- ZIO.service[JWTService]
+  } yield new ReviewController(service, jwtService)
 }

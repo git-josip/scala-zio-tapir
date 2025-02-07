@@ -7,11 +7,11 @@ import sttp.tapir.json.zio.*
 import sttp.tapir.generic.auto._
 
 trait ReviewEndpoints extends Endpoints {
-  val createEndpoint: EP[(Long, CreateReviewRequest), Review] = baseEndpoint
+  val createEndpoint: SecureEP[CreateReviewRequest, Review] = secureEndpoint
     .tag("reviews")
     .name("create")
     .description("Creates a review for a company")
-    .in("reviews" / "user" / path[Long]("id"))
+    .in("reviews")
     .post
     .in(jsonBody[CreateReviewRequest])
     .out(jsonBody[Review])

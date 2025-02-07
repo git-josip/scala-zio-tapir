@@ -1,8 +1,8 @@
 package com.reactive.ziotapir.http.controllers
 
-import com.reactive.ziotapir.domain.data.Company
+import com.reactive.ziotapir.domain.data.{Company, User, UserId, UserToken}
 import com.reactive.ziotapir.http.requests.company.CreateCompanyRequest
-import com.reactive.ziotapir.services.CompanyService
+import com.reactive.ziotapir.services.{CompanyService, JWTService}
 import sttp.client3.testing.SttpBackendStub
 import sttp.monad.MonadError
 import sttp.tapir.server.stub.TapirStubInterpreter
@@ -25,6 +25,11 @@ object CompanyControllerSpec extends ZIOSpecDefault {
     override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed(Option.when(slug == dummyCompany.slug)(dummyCompany))
   }
 
+  private val jwtServiceStub = new JWTService {
+    override def createToken(user: User): Task[UserToken] = ZIO.succeed(UserToken(user.email, "bigAccess", 86400))
+    override def verifyToken(token: String): Task[UserId] = ZIO.succeed(UserId(1L, "valid@user.com"))
+  }
+
   private def backendStubZIO(endpointFun: CompanyController => ServerEndpoint[Any, Task]) = for {
     controller <- CompanyController.makeZio
     backendStub <- ZIO.succeed(
@@ -41,6 +46,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
           backendStub <- backendStubZIO(_.create)
           response <- basicRequest
             .post(uri"/companies")
+            .header("Authorization", "Bearer all_good")
             .body(
               CreateCompanyRequest(
                 name = "Test Company",
@@ -82,6 +88,6 @@ object CompanyControllerSpec extends ZIOSpecDefault {
             .contains(dummyCompany)
         }
       }
-    ).provide(ZLayer.succeed(serviceStub))
+    ).provide(ZLayer.succeed(serviceStub), ZLayer.succeed(jwtServiceStub))
   end spec
 }

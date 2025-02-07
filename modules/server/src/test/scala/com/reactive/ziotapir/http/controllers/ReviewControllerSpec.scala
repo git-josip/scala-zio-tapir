@@ -1,8 +1,8 @@
 package com.reactive.ziotapir.http.controllers
 
-import com.reactive.ziotapir.domain.data.Review
+import com.reactive.ziotapir.domain.data.{Review, User, UserId, UserToken}
 import com.reactive.ziotapir.http.requests.review.CreateReviewRequest
-import com.reactive.ziotapir.services.ReviewService
+import com.reactive.ziotapir.services.{JWTService, ReviewService}
 import sttp.client3.testing.SttpBackendStub
 import sttp.monad.MonadError
 import sttp.tapir.server.ServerEndpoint
@@ -38,6 +38,11 @@ object ReviewControllerSpec extends ZIOSpecDefault {
           if id == goodReview.id then goodReview else throw new RuntimeException("not found")
         }
 
+  private val jwtServiceStub = new JWTService {
+    override def createToken(user: User): Task[UserToken] = ZIO.succeed(UserToken(user.email, "bigAccess", 86400))
+    override def verifyToken(token: String): Task[UserId] = ZIO.succeed(UserId(1L, "valid@user.com"))
+  }
+
   private def backendStubZIO(endpointFun: ReviewController => ServerEndpoint[Any, Task]) = for {
     controller <- ReviewController.makeZio
     backendStub <- ZIO.succeed(
@@ -54,7 +59,8 @@ object ReviewControllerSpec extends ZIOSpecDefault {
           stub <- backendStubZIO(_.create)
           request <- ZIO.succeed {
             basicRequest
-              .post(uri"/reviews/user/1")
+              .post(uri"/reviews")
+              .header("Authorization", "Bearer all_good")
               .body(CreateReviewRequest(1L, 5, 5, 5, 5, 10, "all good").toJson)
           }
           response <- request.send(stub)
@@ -105,6 +111,6 @@ object ReviewControllerSpec extends ZIOSpecDefault {
             .exists(_.contains(goodReview))
         }
       }
-    ).provide(ZLayer.succeed(serviceStub))
+    ).provide(ZLayer.succeed(serviceStub), ZLayer.succeed(jwtServiceStub))
   end spec
 }
