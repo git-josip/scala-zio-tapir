@@ -1,90 +1,86 @@
-# Scala ZIO Tapir Project
+Here is the updated `README.md` to reflect the changes:
 
-This project is a Scala-based web application using ZIO, Tapir, and Quill for building reactive and type-safe APIs. The project includes a service layer, repository layer, and HTTP controllers for managing `Company` and `Review` entities.
+# Project Overview
 
-## Project Structure
+This project is a reactive application built with Scala, ZIO, and Tapir. It includes functionalities for managing products and reviews, and integrates with Kafka for streaming product producer events.
 
-- `src/main/scala/com/reactive/ziotapir/domain/data`: Contains domain models such as `Company` and `Review`.
-- `src/main/scala/com/reactive/ziotapir/http/controllers`: Contains HTTP controllers for handling API requests.
-- `src/main/scala/com/reactive/ziotapir/repositories`: Contains repository interfaces and implementations for database operations.
-- `src/main/scala/com/reactive/ziotapir/services`: Contains service layer implementations for business logic.
-- `src/test/scala/com/reactive/ziotapir/http/controllers`: Contains test cases for HTTP controllers.
+## Features
 
-## Dependencies
-
-The project uses the following dependencies:
-
-- ZIO
-- Tapir
-- Quill
-- PostgreSQL
-- Flyway
-- ZIO Test
-- ZIO Mock
-- ZIO Config
-- Logback
-- Java JWT
-- Stripe Java
+- **Product Management**: Create, update, delete, and retrieve products.
+- **Review Management**: Create, update, delete, and retrieve reviews for products.
+- **Kafka Integration**: Stream product producer events using Kafka and ZIO Streams.
 
 ## Getting Started
 
-### Building the Project
+### Prerequisites
 
-To build the project, run:
+- JDK 11 or higher
+- SBT
+- Docker (for running Kafka and PostgreSQL)
 
-```sh
-sbt compile
-```
+### Setting Up
 
-### Running the Application
+1. **Clone the repository**:
+    ```sh
+    git clone https://github.com/your-repo.git
+    cd your-repo
+    ```
 
-To run the application, use:
+2. **Start Docker containers**:
+    ```sh
+    docker-compose up -d
+    ```
 
-```sh
-sbt run
-```
+3. **Run the application**:
+    ```sh
+    sbt run
+    ```
 
 ### Running Tests
 
 To run the tests, use:
-
 ```sh
 sbt test
 ```
 
+## Project Structure
+
+- `src/main/scala/com/reactive/ziotapir/domain/data`: Contains domain models for `Product` and `Review`.
+- `src/main/scala/com/reactive/ziotapir/http/requests`: Contains request models for creating products and reviews.
+- `src/main/scala/com/reactive/ziotapir/repositories`: Contains repository implementations for `Product` and `Review`.
+- `src/main/scala/com/reactive/ziotapir/services`: Contains service implementations for managing products and reviews.
+- `src/main/scala/com/reactive/ziotapir/streams`: Contains Kafka producer and consumer implementations using ZIO Streams.
+
+## Kafka Integration
+
+The project includes a module for streaming product producer events using Kafka and ZIO Streams. Ensure Kafka is running and properly configured in `application.conf`.
+
+### Example Kafka Producer
+
+```scala
+package com.reactive.ziotapir.streams
+
+import zio._
+import zio.kafka.producer._
+import zio.kafka.serde._
+import com.reactive.ziotapir.domain.data.Product
+
+object ProductProducer {
+  def produce(product: Product): RIO[Producer, Unit] = {
+    val record = new ProducerRecord("products", product.id.toString, product)
+    Producer.produce(record, Serde.string, Serde.json[Product])
+  }
+}
+```
+
 ## Configuration
 
-Configuration is managed using ZIO Config. Update the configuration files as needed to match your environment.
+Configuration settings are located in `src/main/resources/application.conf`. Adjust the settings as needed for your environment.
 
+## Contributing
 
-## API Endpoints
-
-### Company Endpoints
-
-- `POST /companies`: Create a new company.
-- `GET /companies`: Get all companies.
-- `GET /companies/{id}`: Get a company by ID.
-
-### Review Endpoints
-
-- `POST /reviews`: Create a new review.
-- `GET /reviews`: Get all reviews.
-- `GET /reviews/{id}`: Get a review by ID.
-
-## Error Handling
-
-Custom error handling is implemented using Tapir. Validation errors are returned as JSON responses with appropriate error messages.
+Contributions are welcome! Please open an issue or submit a pull request.
 
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
-## Acknowledgements
-
-- [ZIO](https://zio.dev/)
-- [Tapir](https://tapir.softwaremill.com/)
-- [Quill](https://getquill.io/)
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
