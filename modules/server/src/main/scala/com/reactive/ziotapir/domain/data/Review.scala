@@ -5,14 +5,13 @@ import zio.json.JsonCodec
 
 case class Review(
   id: Long,
-  companyId: Long,
-  userId: Long,
-  management: Int,
-  culture: Int,
-  salary: Int,
-  benefits: Int,
-  wouldRecommend: Int,
+  userId: Option[Long] = None,
+  userExternalId: Option[String] = None,
+  asin: String,
+  title: String,
   review: String,
+  helpful: Int,
+  images: List[String] = List(),
   created: Instant,
   updated: Instant
 ) derives JsonCodec

@@ -15,76 +15,76 @@ object ReviewRepositorySpec extends ZIOSpecDefault with RepositorySpec {
         for {
           repository <- ZIO.service[ReviewRepository]
           review <- repository.create(goodReview)
-        } yield assertTrue:
-          review.id == goodReview.id &&
-            review.companyId == goodReview.companyId &&
-            review.userId == goodReview.userId &&
-            review.management == goodReview.management &&
-            review.culture == goodReview.culture &&
-            review.salary == goodReview.salary &&
-            review.wouldRecommend == goodReview.wouldRecommend &&
-            review.review == goodReview.review &&
-            review.created.truncatedTo(ChronoUnit.MILLIS) == goodReview.created.truncatedTo(ChronoUnit.MILLIS)
+        } yield assertTrue(
+          review.id == goodReview.id,
+          review.asin == goodReview.asin,
+          review.userId == goodReview.userId,
+          review.title == goodReview.title,
+          review.review == goodReview.review,
+          review.helpful == goodReview.helpful,
+          review.images == goodReview.images,
+          review.created.truncatedTo(ChronoUnit.MILLIS) == goodReview.created.truncatedTo(ChronoUnit.MILLIS)
+        )
       },
 
       test("get review(s) by ids - bad id") {
-        for
+        for {
           repo <- ZIO.service[ReviewRepository]
           byId <- repo.getById(99L)
-          byCompId <- repo.getByCompanyId(99L)
           byUserId <- repo.getByUserId(99L)
-        yield assertTrue:
-          (byId, byCompId, byUserId) == (None, Nil, Nil)
+        } yield assertTrue(
+          byId.isEmpty,
+          byUserId.isEmpty
+        )
       },
       test("get review(s) by ids - good id") {
-        for
+        for {
           repo <- ZIO.service[ReviewRepository]
           good <- repo.create(goodReview)
           bad <- repo.create(badReview)
           byId <- repo.getById(good.id)
-          byCompId <- repo.getByCompanyId(good.companyId)
-          byUserId <- repo.getByUserId(good.userId)
-        yield assertTrue:
-          byId.contains(good) &&
-            byCompId.contains(good) &&
-            byCompId.contains(bad) &&
-            byUserId.contains(good) &&
-            byUserId.contains(bad)
+          byUserId <- repo.getByUserId(good.userId.get)
+        } yield assertTrue(
+          byId.contains(good),
+          byUserId.contains(good),
+          byUserId.contains(bad)
+        )
       },
       test("get all") {
-        for
+        for {
           repo <- ZIO.service[ReviewRepository]
           good <- repo.create(goodReview)
           bad <- repo.create(badReview)
           all <- repo.getAll
-        yield assertTrue:
-          all.length == 2 &&
-            all.contains(good) &&
-            all.contains(bad)
+        } yield assertTrue(
+          all.length == 2,
+          all.contains(good),
+          all.contains(bad)
+        )
       },
       test("update") {
-        for
+        for {
           repo <- ZIO.service[ReviewRepository]
           original <- repo.create(goodReview)
-          updated <- repo.update(original.id, _.copy(review = "SOOO GOOD COMPANY"))
-        yield assertTrue:
-          updated.id == original.id &&
-            updated.companyId == original.companyId &&
-            updated.userId == original.userId &&
-            updated.management == original.management &&
-            updated.culture == original.culture &&
-            updated.salary == original.salary &&
-            updated.wouldRecommend == original.wouldRecommend &&
-            updated.review == "SOOO GOOD COMPANY" &&
-            updated.created == original.created
+          updated <- repo.update(original.id, _.copy(review = "SOOO GOOD PRODUCT"))
+        } yield assertTrue(
+          updated.id == original.id,
+          updated.asin == original.asin,
+          updated.userId == original.userId,
+          updated.title == original.title,
+          updated.review == "SOOO GOOD PRODUCT",
+          updated.helpful == original.helpful,
+          updated.images == original.images,
+          updated.created == original.created
+        )
       },
       test("delete") {
-        for
+        for {
           repo <- ZIO.service[ReviewRepository]
           review <- repo.create(goodReview)
           _ <- repo.delete(review.id)
           fetched <- repo.getById(review.id)
-        yield assertTrue(fetched.isEmpty)
+        } yield assertTrue(fetched.isEmpty)
       }
     ).provide(
       ReviewRepositoryLive.layer,
@@ -96,7 +96,7 @@ object ReviewRepositorySpec extends ZIOSpecDefault with RepositorySpec {
   end spec
 
   private val goodReview =
-    Review(1L, 1L, 1L, 5, 5, 5, 5, 10, "all good", Instant.now(), Instant.now())
+    Review(1L, Some(10L), None, "B00YQ6X8EO", "Perfect product", "Great product and helped me a lot.", 1, List("image1", "image2"), Instant.now(), Instant.now())
   private val badReview =
-    Review(2L, 1L, 1L, 1, 1, 1, 1, 1, "all bad", Instant.now(), Instant.now())
+    Review(2L, Some(10L), None, "B00YQ6X8E1", "Bad product", "Did not like it at all.", 0, List("image3"), Instant.now(), Instant.now())
 }

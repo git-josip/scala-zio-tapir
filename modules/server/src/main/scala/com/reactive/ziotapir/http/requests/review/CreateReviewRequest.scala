@@ -3,27 +3,22 @@ package com.reactive.ziotapir.http.requests.review
 import com.reactive.ziotapir.domain.data.Review
 import zio.json.JsonCodec
 import java.time.Instant
+import com.reactive.ziotapir.utils.generateASIN
 
 final case class CreateReviewRequest(
-  companyId: Long,
-  management: Int,
-  culture: Int,
-  salary: Int,
-  benefits: Int,
-  wouldRecommend: Int,
-  review: String
+  title: String,
+  review: String,
+  helpful: Int,
+  images: Option[List[String]] = None
 ) derives JsonCodec:
-  def toReview(id: Long, userId: Long): Review =
+  def toReview(userId: Long): Review =
     Review(
-      id,
-      companyId,
-      userId,
-      management,
-      culture,
-      salary,
-      benefits,
-      wouldRecommend,
-      review,
-      Instant.now(),
-      Instant.now()
+      id = -1L,
+      asin = generateASIN(),
+      title = title,
+      review = review,
+      helpful = helpful,
+      images = images.getOrElse(List()),
+      created = Instant.now(),
+      updated = Instant.now()
     )

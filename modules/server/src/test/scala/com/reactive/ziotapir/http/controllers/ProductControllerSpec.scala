@@ -1,8 +1,8 @@
 package com.reactive.ziotapir.http.controllers
 
-import com.reactive.ziotapir.domain.data.{Company, User, UserId, UserToken}
-import com.reactive.ziotapir.http.requests.company.CreateCompanyRequest
-import com.reactive.ziotapir.services.{CompanyService, JWTService}
+import com.reactive.ziotapir.domain.data.{Product, User, UserId, UserToken}
+import com.reactive.ziotapir.http.requests.product.CreateProductRequest
+import com.reactive.ziotapir.services.{JWTService, ProductService}
 import sttp.client3.testing.SttpBackendStub
 import sttp.monad.MonadError
 import sttp.tapir.server.stub.TapirStubInterpreter
@@ -14,15 +14,28 @@ import zio.*
 import zio.test.*
 import com.reactive.ziotapir.syntax.*
 
-object CompanyControllerSpec extends ZIOSpecDefault {
+import java.time.Instant
+
+object ProductControllerSpec extends ZIOSpecDefault {
   private given zioME: MonadError[Task] = new RIOMonadError[Any]
 
-  private val dummyCompany = Company(1L, "test-company", "Test Company", "test.com")
-  private val serviceStub = new CompanyService {
-    override def create(createCompanyRequest: CreateCompanyRequest): Task[Company] = ZIO.succeed(dummyCompany)
-    override def getAll: Task[List[Company]] = ZIO.succeed(List(dummyCompany))
-    override def getById(id: Long): Task[Option[Company]] = ZIO.succeed(Option.when(id == dummyCompany.id)(dummyCompany))
-    override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed(Option.when(slug == dummyCompany.slug)(dummyCompany))
+
+  val productAsin = "B00YQ6X8EO"
+  private val dummyProduct = Product(
+    id = 1L,
+    productAsin,
+    name = "Test Product",
+    url = "test.com",
+    images = List("image1", "image2"),
+    created = Instant.now(),
+    updated = Instant.now()
+  )
+
+  private val serviceStub = new ProductService {
+    override def create(createCompanyRequest: CreateProductRequest): Task[Product] = ZIO.succeed(dummyProduct)
+    override def getAll: Task[List[Product]] = ZIO.succeed(List(dummyProduct))
+    override def getById(id: Long): Task[Option[Product]] = ZIO.succeed(Option.when(id == dummyProduct.id)(dummyProduct))
+    override def getByAsin(asin: String): Task[Option[Product]] = ZIO.succeed(Option.when(asin == dummyProduct.asin)(dummyProduct))
   }
 
   private val jwtServiceStub = new JWTService {
@@ -30,8 +43,8 @@ object CompanyControllerSpec extends ZIOSpecDefault {
     override def verifyToken(token: String): Task[UserId] = ZIO.succeed(UserId(1L, "valid@user.com"))
   }
 
-  private def backendStubZIO(endpointFun: CompanyController => ServerEndpoint[Any, Task]) = for {
-    controller <- CompanyController.makeZio
+  private def backendStubZIO(endpointFun: ProductController => ServerEndpoint[Any, Task]) = for {
+    controller <- ProductController.makeZio
     backendStub <- ZIO.succeed(
       TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
         .whenServerEndpointRunLogic(endpointFun(controller))
@@ -40,24 +53,24 @@ object CompanyControllerSpec extends ZIOSpecDefault {
   } yield backendStub
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    suite("CompanyController")(
-      test("post company") {
+    suite("ProductControllerSpec")(
+      test("post product") {
         val program = for {
           backendStub <- backendStubZIO(_.create)
           response <- basicRequest
-            .post(uri"/companies")
+            .post(uri"/products")
             .header("Authorization", "Bearer all_good")
             .body(
-              CreateCompanyRequest(
-                name = "Test Company",
+              CreateProductRequest(
+                name = "Test Product",
                 url = "test.com"
               ).toJson
             ).send(backendStub)
         } yield response.body
 
-        program.assert("company create") { resBody =>
-          resBody.toOption.flatMap(_.fromJson[Company].toOption)
-            .contains(dummyCompany)
+        program.assert("product create") { resBody =>
+          resBody.toOption.flatMap(_.fromJson[Product].toOption)
+            .contains(dummyProduct)
         }
       },
 
@@ -65,13 +78,13 @@ object CompanyControllerSpec extends ZIOSpecDefault {
         val program = for {
           backendStub <- backendStubZIO(_.getAll)
           response <- basicRequest
-            .get(uri"/companies")
+            .get(uri"/products")
             .send(backendStub)
         } yield response.body
 
         program.assert("get all should") { resBody =>
-          resBody.toOption.flatMap(_.fromJson[List[Company]].toOption)
-            .contains(List(dummyCompany))
+          resBody.toOption.flatMap(_.fromJson[List[Product]].toOption)
+            .contains(List(dummyProduct))
         }
       },
 
@@ -79,13 +92,13 @@ object CompanyControllerSpec extends ZIOSpecDefault {
         val program = for {
           backendStub <- backendStubZIO(_.getById)
           response <- basicRequest
-            .get(uri"/companies/1")
+            .get(uri"/products/1")
             .send(backendStub)
         } yield response.body
 
         program.assert("get by id should contain") { resBody =>
-          resBody.toOption.flatMap(_.fromJson[Company].toOption)
-            .contains(dummyCompany)
+          resBody.toOption.flatMap(_.fromJson[Product].toOption)
+            .contains(dummyProduct)
         }
       }
     ).provide(ZLayer.succeed(serviceStub), ZLayer.succeed(jwtServiceStub))

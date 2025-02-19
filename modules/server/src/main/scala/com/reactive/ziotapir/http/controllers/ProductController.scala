@@ -1,12 +1,12 @@
 package com.reactive.ziotapir.http.controllers
 
 import com.reactive.ziotapir.domain.data.UserId
-import com.reactive.ziotapir.http.endpoints.{CompanyEndpoints, HealthEndpoint}
-import com.reactive.ziotapir.services.{CompanyService, JWTService}
+import com.reactive.ziotapir.http.endpoints.{ProductEndpoints, HealthEndpoint}
+import com.reactive.ziotapir.services.{ProductService, JWTService}
 import sttp.tapir.server.ServerEndpoint
 import zio.{Task, ZIO}
 
-class CompanyController private (service: CompanyService, jwtService: JWTService) extends BaseController with CompanyEndpoints {
+class ProductController private(service: ProductService, jwtService: JWTService) extends BaseController with ProductEndpoints {
   val create = createEndpoint
     .serverSecurityLogic[UserId, Task](jwtService.verifyToken(_).either)
     .serverLogic { userId => req =>
@@ -20,7 +20,7 @@ class CompanyController private (service: CompanyService, jwtService: JWTService
       .succeed(id.toLongOption)
       .flatMap:
         case Some(value) => service.getById(value).either
-        case None        => service.getBySlug(id).either
+        case None        => service.getByAsin(id).either
   }
 
   override val routes: List[ServerEndpoint[Any, Task]] = List(
@@ -30,9 +30,9 @@ class CompanyController private (service: CompanyService, jwtService: JWTService
   )
 }
 
-object CompanyController {
+object ProductController {
   val makeZio = for {
-    service <- ZIO.service[CompanyService]
+    service <- ZIO.service[ProductService]
     jwtService <- ZIO.service[JWTService]
-  } yield new CompanyController(service, jwtService)
+  } yield new ProductController(service, jwtService)
 }

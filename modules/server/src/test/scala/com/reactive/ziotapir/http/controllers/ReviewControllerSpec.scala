@@ -18,25 +18,28 @@ object ReviewControllerSpec extends ZIOSpecDefault {
   private given zioME: MonadError[Task] = new RIOMonadError[Any]
 
   private val goodReview =
-    Review(1L, 1L, 1L, 5, 5, 5, 5, 10, "all good", Instant.now(), Instant.now())
+    Review(1L, Some(1L), Some("ext1"), "B00YQ6X8EO", "Perfect product", "Great product and helped me a lot.", 1, List("image1", "image2"), Instant.now(), Instant.now())
 
   private val serviceStub = new ReviewService:
-        override def create(req: CreateReviewRequest, userId: Long): Task[Review] =
-          ZIO.succeed(goodReview)
-        override def getAll: Task[List[Review]] =
-          ZIO.succeed(List(goodReview))
-        override def getById(id: Long): Task[Option[Review]] = ZIO.succeed {
-          if id == goodReview.id then Some(goodReview) else None
-        }
-        override def getByCompanyId(id: Long): Task[List[Review]] = ZIO.succeed {
-          if id == goodReview.companyId then List(goodReview) else List.empty
-        }
-        override def getByUserId(id: Long): Task[List[Review]] = ZIO.succeed {
-          if id == goodReview.userId then List(goodReview) else List.empty
-        }
-        override def delete(id: Long): Task[Review] = ZIO.succeed {
-          if id == goodReview.id then goodReview else throw new RuntimeException("not found")
-        }
+    override def create(req: CreateReviewRequest, userId: Long): Task[Review] =
+      ZIO.succeed(goodReview)
+    override def getAll: Task[List[Review]] =
+      ZIO.succeed(List(goodReview))
+    override def getById(id: Long): Task[Option[Review]] = ZIO.succeed {
+      if id == goodReview.id then Some(goodReview) else None
+    }
+    override def getByAsin(asin: String): Task[Option[Review]] = ZIO.succeed {
+      if asin == goodReview.asin then Some(goodReview) else None
+    }
+    override def getByUserId(id: Long): Task[List[Review]] = ZIO.succeed {
+      if goodReview.userId.contains(id) then List(goodReview) else List.empty
+    }
+    override def getByUserExternalIdId(userExternalId: String): Task[List[Review]] = ZIO.succeed {
+      if goodReview.userExternalId.contains(userExternalId) then List(goodReview) else List.empty
+    }
+    override def delete(id: Long): Task[Review] = ZIO.succeed {
+      if id == goodReview.id then goodReview else throw new RuntimeException("not found")
+    }
 
   private val jwtServiceStub = new JWTService {
     override def createToken(user: User): Task[UserToken] = ZIO.succeed(UserToken(user.email, "bigAccess", 86400))
@@ -61,7 +64,7 @@ object ReviewControllerSpec extends ZIOSpecDefault {
             basicRequest
               .post(uri"/reviews")
               .header("Authorization", "Bearer all_good")
-              .body(CreateReviewRequest(1L, 5, 5, 5, 5, 10, "all good").toJson)
+              .body(CreateReviewRequest("Perfect product", "Great product and helped me a lot.", 1, Some(List("image1", "image2"))).toJson)
           }
           response <- request.send(stub)
         yield assertTrue {
@@ -89,16 +92,6 @@ object ReviewControllerSpec extends ZIOSpecDefault {
         yield assertTrue {
           response.body.toOption.flatMap(_.fromJson[Review].toOption)
             .contains(goodReview)
-        }
-      },
-      test("get by company id") {
-        for
-          stub <- backendStubZIO(_.getByCompanyId)
-          request <- ZIO.succeed(basicRequest.get(uri"/reviews/company/1"))
-          response <- request.send(stub)
-        yield assertTrue {
-          response.body.toOption.flatMap(_.fromJson[List[Review]].toOption)
-            .exists(_.contains(goodReview))
         }
       },
       test("get by user id") {

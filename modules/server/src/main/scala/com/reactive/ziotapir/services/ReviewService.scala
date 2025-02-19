@@ -9,22 +9,25 @@ trait ReviewService {
   def create(req: CreateReviewRequest, userId: Long): Task[Review]
   def getAll: Task[List[Review]]
   def getById(id: Long): Task[Option[Review]]
-  def getByCompanyId(companyId: Long): Task[List[Review]]
+  def getByAsin(asin: String): Task[Option[Review]]
   def getByUserId(userId: Long): Task[List[Review]]
+  def getByUserExternalIdId(userExternalId: String): Task[List[Review]]
   def delete(id: Long): Task[Review]
 }
 
 class ReviewServiceLive private (repository: ReviewRepository) extends ReviewService {
   override def create(req: CreateReviewRequest, userId: Long): Task[Review] =
-    repository.create(req.toReview(-1L, userId))
+    repository.create(req.toReview(userId))
 
   override def getAll: Task[List[Review]] = repository.getAll
 
   override def getById(id: Long): Task[Option[Review]] = repository.getById(id)
 
-  override def getByCompanyId(companyId: Long): Task[List[Review]] = repository.getByCompanyId(companyId)
+  override def getByAsin(asin: String): Task[Option[Review]] = repository.getByAsin(asin)
 
   override def getByUserId(userId: Long): Task[List[Review]] = repository.getByUserId(userId)
+
+  override def getByUserExternalIdId(userExternalId: String): Task[List[Review]] = repository.getByUserExternalId(userExternalId)
 
   override def delete(id: Long): Task[Review] = repository.delete(id)
 }

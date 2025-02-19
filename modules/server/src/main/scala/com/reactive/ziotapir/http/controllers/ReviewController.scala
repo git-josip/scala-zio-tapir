@@ -20,14 +20,12 @@ class ReviewController private (service: ReviewService, jwtService: JWTService) 
       .flatMap(id => service.getById(id).either)
   }
 
-  val getByCompanyId: ServerEndpoint[Any, Task] = getByCompanyIdEndpoint.serverLogic { service.getByCompanyId(_).either }
   val getByUserId: ServerEndpoint[Any, Task] = getByUserIdEndpoint.serverLogic { service.getByUserId(_).either }
 
   override val routes: List[ServerEndpoint[Any, Task]] = List(
     create,
     getAll,
     getById,
-    getByCompanyId,
     getByUserId
   )
 }

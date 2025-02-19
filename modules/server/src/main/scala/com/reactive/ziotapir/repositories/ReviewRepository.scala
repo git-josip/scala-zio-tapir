@@ -10,8 +10,9 @@ import io.getquill.*
 trait ReviewRepository {
   def create(review: Review): Task[Review]
   def getById(id: Long): Task[Option[Review]]
-  def getByCompanyId(companyId: Long): Task[List[Review]]
+  def getByAsin(asin: String): Task[Option[Review]]
   def getByUserId(userId: Long): Task[List[Review]]
+  def getByUserExternalId(userExternalId: String): Task[List[Review]]
   def update(id: Long, op: Review => Review): Task[Review]
   def delete(id: Long): Task[Review]
   def getAll: Task[List[Review]]
@@ -36,15 +37,21 @@ class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends Re
       .filter(_.id == lift(id))
   }.map(_.headOption)
 
-  override def getByCompanyId(companyId: Long): Task[List[Review]] = run {
+  override def getByAsin(asin: String): Task[Option[Review]] = run {
     query[Review]
-      .filter(_.companyId == lift(companyId))
-  }
+      .filter(_.asin == lift(asin))
+  }.map(_.headOption)
 
   override def getByUserId(userId: Long): Task[List[Review]] = run {
     query[Review]
-      .filter(_.userId == lift(userId))
+      .filter(_.userId.exists(_ == lift(userId)))
   }
+
+  override def getByUserExternalId(userExternalId: String): Task[List[Review]] = run {
+    query[Review]
+      .filter(_.userExternalId.exists(_ == lift(userExternalId)))
+  }
+
 
   def update(id: Long, op: Review => Review): Task[Review] = for {
     current <- getById(id).someOrFail(NotFoundError(s"Could not update, missing id $id"))

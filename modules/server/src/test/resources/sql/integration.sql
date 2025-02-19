@@ -1,20 +1,11 @@
-CREATE TABLE IF NOT EXISTS companies (
-                                         id          BIGSERIAL
-                                             PRIMARY KEY,
-                                         slug        TEXT
-                                             UNIQUE
-                                             NOT NULL,
-                                         name        TEXT
-                                             UNIQUE
-                                             NOT NULL,
-                                         url         TEXT
-                                             UNIQUE
-                                             NOT NULL,
-                                         location    TEXT,
-                                         country     TEXT,
-                                         industry    TEXT,
-                                         image       TEXT,
-                                         tags        TEXT[]
+CREATE TABLE IF NOT EXISTS products (
+                                        id BIGSERIAL PRIMARY KEY,
+                                        asin VARCHAR(255) UNIQUE NOT NULL,
+                                        name TEXT UNIQUE NOT NULL,
+                                        url TEXT NOT NULL,
+                                        images TEXT[],
+                                        created TIMESTAMPTZ NOT NULL DEFAULT now(),
+                                        updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -28,33 +19,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
-                                       id              BIGSERIAL
-                                           PRIMARY KEY,
-                                       company_id      BIGINT
-                                                              NOT NULL,
-                                       FOREIGN KEY (company_id)
-                                           REFERENCES companies(id),
-                                       user_id         BIGINT NOT NULL,
+                                       id BIGSERIAL PRIMARY KEY,
+                                       user_id         BIGINT,
                                        FOREIGN KEY (user_id)
                                            REFERENCES users(id),
-                                       management      INT
-                                                              NOT NULL,
-                                       culture         INT
-                                                              NOT NULL,
-                                       salary          INT
-                                                              NOT NULL,
-                                       benefits        INT
-                                                              NOT NULL,
-                                       would_recommend INT
-                                                              NOT NULL,
-                                       review          TEXT
-                                                              NOT NULL,
-                                       created         TIMESTAMP
-                                                              NOT NULL
-                                           DEFAULT now(),
-                                       updated         TIMESTAMP
-                                                              NOT NULL
-                                           DEFAULT now()
+                                       user_external_id VARCHAR(255),
+                                       asin VARCHAR(255) UNIQUE NOT NULL,
+                                       title VARCHAR(255) NOT NULL,
+                                       review TEXT NOT NULL,
+                                       helpful INT NOT NULL,
+                                       images TEXT[],
+                                       created TIMESTAMPTZ NOT NULL DEFAULT now(),
+                                       updated TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS recovery_tokens (

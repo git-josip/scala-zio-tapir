@@ -5,7 +5,7 @@ import com.reactive.ziotapir.http.requests.review.CreateReviewRequest
 import com.reactive.ziotapir.repositories.ReviewRepository
 import zio.*
 import zio.test.*
-
+import com.reactive.ziotapir.utils.generateASIN
 import java.time.Instant
 
 object ReviewServiceSpec extends ZIOSpecDefault {
@@ -15,11 +15,16 @@ object ReviewServiceSpec extends ZIOSpecDefault {
     override def getById(id: Long): Task[Option[Review]] = update(id, identity)
       .map(Option.apply)
       .catchAll(_ => ZIO.succeed(None))
-    override def getByCompanyId(companyId: Long): Task[List[Review]] = ZIO.succeed {
-      if companyId == goodReview.companyId then List(goodReview) else Nil
-    }
+    override def getByAsin(asin: String): Task[Option[Review]] =
+      if asin != goodReview.asin then ZIO.fail(new RuntimeException("bad asin"))
+      else ZIO.succeed(goodReview).map(Option.apply)
+
     override def getByUserId(userId: Long): Task[List[Review]] = ZIO.succeed {
-      if userId == goodReview.userId then List(goodReview) else Nil
+      if goodReview.userId.contains(userId) then List(goodReview) else Nil
+    }
+
+    override def getByUserExternalId(userExternalId: String): Task[List[Review]] = ZIO.succeed {
+      if goodReview.userExternalId.contains(userExternalId) then List(goodReview) else Nil
     }
     override def update(id: Long, op: Review => Review): Task[Review] =
       if id != goodReview.id then ZIO.fail(new RuntimeException("bad id"))
@@ -36,13 +41,12 @@ object ReviewServiceSpec extends ZIOSpecDefault {
           review <- service.create(createReviewRequest, 1L)
         } yield assertTrue:
           review.id == 1L &&
-            review.companyId == createReviewRequest.companyId &&
-            review.userId == 1L &&
-            review.management == createReviewRequest.management &&
-            review.culture == createReviewRequest.culture &&
-            review.salary == createReviewRequest.salary &&
-            review.wouldRecommend == createReviewRequest.wouldRecommend &&
-            review.review == createReviewRequest.review
+            review.userId.contains(2L) &&
+            review.asin == poductAsin &&
+            review.userExternalId.contains("ext1") &&
+            review.title == createReviewRequest.title &&
+            review.review == createReviewRequest.review &&
+            review.helpful == createReviewRequest.helpful
       },
       test("getById") {
         for
@@ -50,16 +54,10 @@ object ReviewServiceSpec extends ZIOSpecDefault {
         review <- service.getById (goodReview.id)
         yield assertTrue (review.contains (goodReview) )
       },
-      test("getByCompanyId") {
-        for
-          service <- ZIO.service[ReviewService]
-          reviews <- service.getByCompanyId(goodReview.companyId)
-        yield assertTrue(reviews.contains(goodReview))
-      },
       test("getByUserId") {
         for
           service <- ZIO.service[ReviewService]
-          reviews <- service.getByUserId(goodReview.userId)
+          reviews <- service.getByUserId(goodReview.userId.get)
         yield assertTrue(reviews.contains(goodReview))
       }
     ).provide(
@@ -69,14 +67,12 @@ object ReviewServiceSpec extends ZIOSpecDefault {
   end spec
 
   val createReviewRequest = CreateReviewRequest(
-    companyId = 1L,
-    management = 5,
-    culture = 4,
-    salary = 3,
-    benefits = 2,
-    wouldRecommend = 1,
-    review = "Great company!"
+    title = "Perfect product",
+    review = "Great product and helped me a lot.",
+    helpful = 1,
+    images = Some(List("image1", "image2")),
   )
+  val poductAsin = generateASIN()
   private val goodReview =
-    Review(1L, 1L, 1L, 5, 4, 3, 2, 1, "Great company!", Instant.now(), Instant.now())
+    Review(1L, Some(2L), Some("ext1"), poductAsin, "Perfect product", "Great product and helped me a lot.", 1, List("image1", "image2"), Instant.now(), Instant.now())
 }
