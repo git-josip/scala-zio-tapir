@@ -1,3 +1,6 @@
+### custom jsonl files ###
+amazon_reviews.jsonl
+
 # sbt specific files
 target/
 project/target/

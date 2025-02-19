@@ -3,16 +3,20 @@ ThisBuild / scalaVersion := "3.3.1"
 ThisBuild / scalacOptions ++= Seq(
   "-unchecked",
   "-deprecation",
-  "-feature"
+  "-feature",
+  "-explain"
 )
 
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+ThisBuild / libraryDependencySchemes += "dev.zio" %% "zio-json" % "early-semver"
+ThisBuild / dependencyOverrides += "dev.zio" %% "zio-json" % "0.7.21"
+ThisBuild / dependencyOverrides +=   "ch.qos.logback" %% "logback-classic" % "1.5.16"
 
-val zioVersion        = "2.0.19"
-val tapirVersion      = "1.2.6"
-val zioLoggingVersion = "2.1.8"
-val zioConfigVersion  = "3.0.7"
-val sttpVersion       = "3.8.8"
+val zioVersion        = "2.1.15"
+val tapirVersion      = "1.11.14"
+val zioLoggingVersion = "2.4.0"
+val zioConfigVersion  = "4.0.3"
+val sttpVersion       = "3.10.3"
 val javaMailVersion   = "1.6.2"
 val stripeVersion     = "24.3.0"
 
@@ -25,9 +29,11 @@ val dependencies = Seq(
   "com.softwaremill.sttp.tapir"   %% "tapir-zio-http-server"             % tapirVersion,
   "com.softwaremill.sttp.tapir"   %% "tapir-swagger-ui-bundle"           % tapirVersion,
   "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server"            % tapirVersion % "test",
-  "dev.zio"                       %% "zio-logging"                       % zioLoggingVersion,
-  "dev.zio"                       %% "zio-logging-slf4j"                 % zioLoggingVersion,
-  "ch.qos.logback"                 % "logback-classic"                   % "1.4.4",
+  "dev.zio"                       %% "zio-streams"                       % zioVersion,
+  "dev.zio"                       %% "zio-kafka"                         % "2.10.0",
+  "dev.zio"                       %% "zio-logging"                       % "2.1.15",
+  "dev.zio"                       %% "zio-logging-slf4j"                 % "2.1.15",
+  "dev.zio"                       %% "zio-logging-slf4j2-bridge"         % "2.1.15",
   "dev.zio"                       %% "zio-test"                          % zioVersion,
   "dev.zio"                       %% "zio-test-junit"                    % zioVersion   % "test",
   "dev.zio"                       %% "zio-test-sbt"                      % zioVersion   % "test",
@@ -52,9 +58,15 @@ lazy val server = (project in file("modules/server"))
     libraryDependencies ++= dependencies
   )
 
+lazy val `reviews-producer` = (project in file("modules/reviews-producer"))
+  .settings(
+    libraryDependencies ++= dependencies
+  )
+
+
 lazy val root = (project in file("."))
   .settings(
     name := "scala-zio-tapir"
   )
-  .aggregate(server)
-  .dependsOn(server)
+  .aggregate(server, `reviews-producer`)
+  .dependsOn(server, `reviews-producer`)
